@@ -8,7 +8,7 @@
       "address": "서울시 강남구 역삼동 123",
       "type": "admin",
       "loginType": "email",
-      "image": "files/team/user-muzi.png",
+      "image": "uploadFiles/user-muzi.png",
       "extra": {
         "birthday": "03-23"
       }
@@ -21,7 +21,7 @@
       "address": "서울시 강남구 삼성동 456",
       "type": "seller",
       "loginType": "email",
-      "image": "files/team/user-neo.png",
+      "image": "uploadFiles/user-neo.png",
       "extra": {
         "birthday": "11-23"
       }
@@ -66,7 +66,7 @@
       "mainImages": [
         {
           "path": "uploadFiles/dogtoy.png",
-          "name": "sample-dog.jpg"
+          "name": "sample-dog.png"
         }
       ],
       "content": "강아지 실 장난감 판매합니다. 여러 개 사뒀는데 저희 강아진 안 가지고 노네요...ㅎㅎ 사진에 보이는 것보다 많이 있어요!",
@@ -86,8 +86,8 @@
       "buyQuantity": 0,
       "mainImages": [
         {
-          "path": "uploadFiles/cat_toy.png",
-          "name": "sample-cat_toy.jpg"
+          "path": "uploadFiles/cattoy.jpg",
+          "name": "sample-cattoy.jpg"
         }
       ],
       "content": "고양이들이 환장하는 쥐 모양 장난감입니다! 저희 집 고양이는 별로 안 좋아하는 것 같아서 내놓습니다. 사용감은 거의 없습니다!!",
@@ -107,8 +107,8 @@
       "buyQuantity": 0,
       "mainImages": [
         {
-          "path": "uploadFiles/dog_toy2.png",
-          "name": "sample-dog_toy2.jpg"
+          "path": "uploadFiles/dogtoy2.jpg",
+          "name": "sample-dogtoy2.jpg"
         }
       ],
       "content": "강아지들이 물기 좋은 푹신한 장난감입니다. 사용감은 없습니다. 새 상품입니다!",
