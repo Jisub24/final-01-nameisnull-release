@@ -1,3 +1,5 @@
+import UnderBar from '@/components/common/Footer';
+
 export default function Home() {
   return (
     <>
@@ -7,6 +9,8 @@ export default function Home() {
       <div className="bg-br-primary-500 text-br-button-disabled-text font-pretendard">
         커스텀 스타일
       </div>
+
+      <UnderBar />
     </>
   );
 }
