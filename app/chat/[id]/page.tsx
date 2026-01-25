@@ -95,7 +95,7 @@ export default function ChatPage() {
             onClick={() => {}}
             className="w-7 h-7"
           >
-            <Image src="/icons/chat-plus.svg" alt="" width={28} height={28} />
+            <Image src="/icons/add.svg" alt="" width={28} height={28} />
           </button>
 
           <textarea
