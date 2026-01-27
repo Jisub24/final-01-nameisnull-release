@@ -1,19 +1,20 @@
+//구매내역
 'use client';
 
 import UnderBar from '@/components/common/Footer';
 import Header from '@/components/common/Header';
-import ProductList from '@/components/searchresult/ProductList';
+import PurchasesProductList from '@/components/mypage/PurchasesProductList';
 
-//구매내역
-export default function purchasesPage() {
+export default function PurchasesPage() {
   return (
     <>
-      <div className="font-pretendard mx-4 mb-4">
-        <Header title="판매 내역" />
-        <ProductList />
-        <ProductList />
-        <ProductList />
-        <ProductList />
+      <div className="font-pretendard">
+        <Header title="구매 내역" />
+        <PurchasesProductList />
+        <PurchasesProductList />
+        <PurchasesProductList />
+        <PurchasesProductList />
+        <PurchasesProductList />
         <UnderBar />
       </div>
     </>
