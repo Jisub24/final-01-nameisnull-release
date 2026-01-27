@@ -2,7 +2,7 @@
 
 import UnderBar from '@/components/common/Footer';
 import Header from '@/components/common/Header';
-import ProductList from '@/components/common/ProductList';
+import ProductList from '@/components/searchresult/ProductList';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
