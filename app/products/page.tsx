@@ -1,4 +1,6 @@
 import UnderBar from '@/components/common/Footer';
+import ProductCard from '@/components/product/ProductCard';
+import { getProducts } from '@/lib/api/products';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -6,6 +8,7 @@ export default async function ProductPage() {
   // 스플래시 화면이 나오도록 2.5초 지연 걸어둠
   await new Promise(resolve => setTimeout(resolve, 1000 * 2.5));
 
+  const res = await getProducts();
   const categories = ['전체', '사료', '간식', '용품', '건강', '의류'];
   // 기능 구현때 번경 예정
   const subCategories = ['건식', '습식/화식', '건조', '기타'];
@@ -81,236 +84,18 @@ export default async function ProductPage() {
 
         {/* 상품 목록 */}
         <section className="grid grid-cols-2 gap-4 pb-20">
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
+          {res.ok === 1 &&
+            res.item.map(product => (
+              <ProductCard
+                key={product._id}
+                _id={product._id}
+                price={product.price}
+                mainImages={product.mainImages}
+                name={product.name}
+                views={product.views}
+                bookmarks={product.bookmarks}
               />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-br-input-active-line text-[12px]">2</span>
-            </div>
-          </Link>
-
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-br-input-active-line text-[12px]">2</span>
-            </div>
-          </Link>
-
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-br-input-active-line text-[12px]">2</span>
-            </div>
-          </Link>
-
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-br-input-active-line text-[12px]">2</span>
-            </div>
-          </Link>
-
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-br-input-active-line text-[12px]">2</span>
-            </div>
-          </Link>
-
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-[#8A8F99] text-[12px]">2</span>
-            </div>
-          </Link>
-
-          <Link href={'/products/1'}>
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-              <Image
-                src="https://res.cloudinary.com/ddedslqvv/image/upload/v1768981576/febc15-final01-ecad/qBJjByQxs.png"
-                alt="상품 이미지"
-                width={164}
-                height={164}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="mt-2 font-semibold">5,000원</p>
-            <p className="mt-1.5 text-br-input-active-line">
-              부드러운 면 소재에 귀여운 강아지 옷 판매합니다!
-            </p>
-            <div className="flex gap-0.5 mt-2">
-              <Image
-                src="/icons/visile-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-              />
-              <span className="text-br-input-active-line text-[12px]">103</span>
-              <Image
-                src="/icons/heart-line-gray.svg"
-                alt=""
-                width={12}
-                height={8}
-                className="ml-1"
-              />
-              <span className="text-br-input-active-line text-[12px]">2</span>
-            </div>
-          </Link>
+            ))}
         </section>
       </div>
 

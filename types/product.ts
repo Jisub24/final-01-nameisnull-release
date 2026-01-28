@@ -51,7 +51,7 @@ export interface ProductSearchListRes {
 //상품 목록 페이지
 export type ProductList = Pick<
   Product,
-  '_id' | 'price' | 'name' | 'mainImages' | 'bookmarks'
+  '_id' | 'price' | 'name' | 'mainImages' | 'bookmarks' | 'views'
 >;
 
 //상품 등록 페이지
