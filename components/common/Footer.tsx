@@ -8,8 +8,9 @@ import { usePathname } from 'next/navigation';
 export default function UnderBar() {
   const pathname = usePathname();
   const isActive = (href: string) => {
-    // 홈인 (/products)은 정확히 /products일 때만 활성
-    if (href === '/products') return pathname === '/products';
+    // 홈인 (/products)는 루트인 /이거나 /products일 때만 활성
+    if (href === '/products')
+      return pathname === '/products' || pathname === '/';
 
     // 나머지는 하위 경로까지 활성
     return pathname === href || pathname.startsWith(`${href}/`);

@@ -24,6 +24,7 @@ export interface Product {
     condition: 'new' | 'used'; // 새상품/중고
     tradeType: 'delivery' | 'direct' | 'both'; //택배/직거래/둘다
     tradeLocation?: string;
+    embeddings?: number[];
   };
   seller: User;
   replies: [];
@@ -33,8 +34,10 @@ export interface Product {
 // 검색 결과용 Product
 export type ProductSearchList = Pick<
   Product,
-  'name' | 'price' | 'mainImages' | 'bookmarks'
->;
+  '_id' | 'name' | 'price' | 'mainImages' | 'bookmarks'
+> & {
+  similarity: number; // 유사도
+};
 
 // 검색 결과 응답 타입 -> 얘만 따로
 export interface ProductSearchListRes {

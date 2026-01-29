@@ -3,7 +3,8 @@
 
 import UnderBar from '@/components/common/Footer';
 import Header from '@/components/common/Header';
-import ProductList from '@/components/searchresult/ProductList';
+import ProductList from '@/components/search/ProductList';
+
 import Image from 'next/image';
 
 export default function SearchResultPage() {
