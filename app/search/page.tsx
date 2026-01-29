@@ -1,27 +1,37 @@
 'use client';
 
-import styles from './searchpage.module.css';
-import { useEffect, useState } from 'react';
-
 import UnderBar from '@/components/common/Footer';
 import Image from 'next/image';
 import Header from '@/components/common/Header';
 
-const hints = [
-  '"시니어 강아지가 먹을 간식 뭐야?"',
-  '"활동량 적은 고양이 장난감 추천해 줘!"',
-  '"관절 사료 추천해 줘!"',
-];
+import { useState } from 'react';
+import { AllProductEmbeddings } from '@/actions/ai-search/generate-embeddings';
+import SearchForm from '@/components/search/SearchForm';
+import SearchHint from '@/components/search/SearchHint';
 
 export default function SearchPage() {
-  const [hintIndex, setHintIndex] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setHintIndex(i => (i + 1) % hints.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, []);
+  // 임베딩 생성 함수
+  const handleGenerateEmbeddings = async () => {
+    if (!confirm('모든 상품을 임베딩하시겠습니까? (1~2분 소요)')) {
+      return;
+    }
+
+    setIsGenerating(true);
+    console.log('🚀 임베딩 생성 시작...');
+
+    try {
+      await AllProductEmbeddings();
+      console.log('✅ 완료! Bruno로 확인하세요.');
+      alert('완료! Bruno에서 extra.embeddings 확인하세요.');
+    } catch (error) {
+      console.error('❌ 실패:', error);
+      alert('실패! 콘솔 확인하세요.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <>
@@ -46,32 +56,24 @@ export default function SearchPage() {
               <br /> 맞는 상품을 추천해드려요.
             </p>
 
+            {/* 임베딩 생성 버튼 */}
+            <button
+              onClick={handleGenerateEmbeddings}
+              disabled={isGenerating}
+              className={`mb-4 px-4 py-2 rounded text-white font-bold ${
+                isGenerating
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-red-500 hover:bg-red-600'
+              }`}
+            >
+              {isGenerating
+                ? '임베딩 생성 중... (1~2분)'
+                : '모든 상품 임베딩 생성'}
+            </button>
+
             {/* 검색창 */}
-            <div className="relative w-full mt-12">
-              <Image
-                src="/icons/aisearch-generation.svg"
-                alt="검색"
-                width={26}
-                height={25}
-                className="absolute left-4 top-1/2 -translate-y-1/2"
-              />
-
-              <input
-                type="search"
-                placeholder='"말랑한 간식 추천해 줘"'
-                className="w-full h-13 rounded-full border border-br-input-disabled-line
-                focus:border-br-primary-500 focus:border-2 focus:outline-none
-                shadow-[0_6px_14px_-10px_rgba(0,0,0,0.25)] pl-12 pr-4
-                text-left text-[15px] text-br-input-disabled-text
-                placeholder:text-center"
-              />
-            </div>
-
-            <div className="mt-5 h-4.5 overflow-hidden text-br-input-disabled-line text-[13px]">
-              <span key={hintIndex} className={styles.hint}>
-                {hints[hintIndex]}
-              </span>
-            </div>
+            <SearchForm />
+            <SearchHint />
           </div>
         </main>
 
