@@ -18,6 +18,8 @@ export default function MyFofoPage() {
   const [tradeMethod, setTradeMethod] = useState('dog');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  /* TODO 임시 - 추후 삭제 */
+  const [price, setPrice] = useState('');
 
   /* 1. 사진 등록 */
   const [photos, setPhotos] = useState<File[]>([]);
