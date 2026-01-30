@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function PurchasesProductList() {
   return (
     <Link
-      href={`/products/`}
+      href={`/products/{id}`}
       className="relative flex flex-row mt-4.25 gap-4 m-4 mr-4"
     >
       {/* 썸네일 */}
@@ -52,18 +52,10 @@ export default function PurchasesProductList() {
         </div>
       </div>
 
-      {/* <Link
-        href="/review"
-        className="absolute bottom-0 right-0 flex items-center justify-center font-pretendard px-3 py-2 w-24 h-9 text-sm bg-br-input2-disabled-bg text-br-input2-disabled-text rounded-xl z-10"
-        onClick={e => e.stopPropagation()}
-      >
-        발자국 등록
-      </Link> */}
-
+      {/* 발자국 등록 버튼 */}
       <Link
         href="/review"
-        className="absolute bottom-1 right-0 flex items-center justify-center font-pretendard px-3 py-2 w-23 h-9 text-sm bg-br-chip-active-bg text-br-chip-active-text rounded-xl z-10"
-        onClick={e => e.stopPropagation()}
+        className="absolute bottom-1 right-0 flex items-center justify-center font-pretendard px-3 py-2 w-23 h-8 text-sm bg-br-chip-active-bg text-br-chip-active-text rounded-xl z-10"
       >
         발자국 등록
       </Link>
