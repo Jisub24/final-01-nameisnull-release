@@ -5,12 +5,18 @@ import Header from '@/components/common/Header';
 import SellerProfileBar from '@/components/product/SellerProfileBar';
 import ProductInfoTab from '@/components/product/ProductInfoTab';
 import SellerInfoTab from '@/components/product/SellerInfoTab';
-import { ProductDetail, SellerProductList, UserReview } from '@/types/product';
+import {
+  Product,
+  ProductDetail,
+  SellerProductList,
+  UserReview,
+} from '@/types/product';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import ProductDetailFooter from '@/components/product/ProductDetailFooter';
+import ProductDetailCategory from '@/components/product/ProductDetailCategory';
 
 // 상품 상세 페이지 - 클라이언트 컴포넌트
 export default function ProductDetailClient({
