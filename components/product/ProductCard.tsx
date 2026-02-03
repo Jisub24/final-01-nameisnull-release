@@ -18,7 +18,7 @@ export default function ProductCard({
     <Link href={`/products/${_id}`}>
       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
         <Image
-          src={mainImages[0].path}
+          src={mainImages?.[0]?.path || '/icons/no-image.png'}
           alt={`${name} 이미지`}
           width={164}
           height={164}
