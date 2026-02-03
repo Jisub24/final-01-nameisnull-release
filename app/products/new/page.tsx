@@ -2,28 +2,37 @@
 
 'use client';
 
-/* import Header from '@/components/common/Header'; */
-import Image from 'next/image';
-import ArrowIcon from '@/public/icons/arrow-left.svg';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import Link from 'next/link';
+/* 컴포넌트 및 훅 관리 */
+import Header from '@/components/common/Header'; //헤더 컴포넌트
+import Image from 'next/image'; //이미지 컴포넌트
+import { useState } from 'react'; // 상태 관리 훅
+import {
+  CATEGORY_MAP,
+  PetType,
+  MainCategoryKey,
+} from '@/app/products/new/category'; //카테고리 상수
+import { useRouter } from 'next/navigation'; // 라우터 훅(페이지 이동)
+import { registProduct } from '@/lib/api/new'; // 상품 등록 API 함수
+import { SellerProduct } from '@/types/product'; // 상품 타입
 
 export default function MyFofoPage() {
-  const goBack = useRouter();
-  const [petType, setPetType] = useState('dog');
-  const [mainCategory, setMainCategory] = useState('사료');
-  const [subCategory, setSubCategory] = useState('건식');
-  /* TODO state 이름 다시 확인 */
-  const [productStatus, setProductStatus] = useState('dog');
-  const [tradeMethod, setTradeMethod] = useState('dog');
+  /* ========== 상태 ========== */
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [petType, setPetType] = useState<PetType>('dog');
+  const [mainCategory, setMainCategory] = useState<MainCategoryKey>('사료');
+  const [subCategory, setSubCategory] = useState(
+    CATEGORY_MAP['dog']['사료'][0]
+  );
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  /* TODO 임시 - 추후 삭제 */
   const [price, setPrice] = useState('');
+  const [condition, setCondition] = useState('used');
+  const [tradeType, setTradeType] = useState('direct');
+  const [tradeLocation, setTradeLocation] = useState('');
+  const router = useRouter(); // 라우터 인스턴스(페이지 이동)
 
-  /* 1. 사진 등록 */
-  const [photos, setPhotos] = useState<File[]>([]);
+  /* ========== 핸들러 ========== */
+  /* 사진 등록(input) */
   const handleAddPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
@@ -34,370 +43,411 @@ export default function MyFofoPage() {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
-  const [displayValue, setDisplayValue] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 1. 숫자 이외의 문자 제거
+  /* 가격(input) */
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^0-9]/g, '');
 
-    // 2. 세 자리마다 콤마 추가 (Intl.NumberFormat 사용)
     if (rawValue === '') {
-      setDisplayValue('');
+      setPrice('');
     } else {
       const formattedValue = new Intl.NumberFormat('ko-KR').format(
         Number(rawValue)
       );
-      setDisplayValue(formattedValue);
+      setPrice(formattedValue);
     }
   };
+  /* 반려동물 선택(button) <-> 메인 카테고리 */
+  const handlePetChange = (type: 'dog' | 'cat') => {
+    setPetType(type);
+    setMainCategory('사료'); // 메인 초기화
+    setSubCategory(CATEGORY_MAP[type]['사료'][0]); // 첫 번째 서브 항목으로 초기화
+  };
 
-  /* 버튼 이벤트 */
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  /* 카테고리(button) <-> 서브 카테고리 */
+  const handleMainChange = (category: MainCategoryKey) => {
+    setMainCategory(category);
+    // 현재 petType에 맞춰서 해당 카테고리의 첫 번째 항목 선택
+    setSubCategory(CATEGORY_MAP[petType][category][0]);
+  };
+
+  /* TODO 상품 등록(button) : 이해가 필요한 부분 */
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    /* TODO 이름들 하기 */
-    if (photos.length === 0) {
-      alert('사진을 1장 이상 추가해주세요');
+    // TODO alert말고 다른 방법 생각
+    // 1. 유효성 검사 (필수 입력값 확인)
+    if (photos.length === 0) return alert('사진을 1장 이상 추가해주세요');
+    if (!title.trim()) {
+      alert('제목을 입력해주세요');
+      return;
+    }
+    if (!description.trim()) {
+      alert('설명을 입력해주세요');
+      return;
+    }
+    if (!price.trim()) {
+      alert('가격을 입력해주세요');
       return;
     }
 
-    if (!petType.trim()) {
-      alert('반려 동물을 선택해주세요');
-      return;
-    }
-    if (!mainCategory.trim()) {
-      alert('카테고리를 선택해주세요');
-      return;
-    }
-    if (!subCategory.trim()) {
-      alert('서브 카테고리를 선택해주세요');
-      return;
-    }
-    if (!subCategory.trim()) {
-      alert('서브 카테고리를 선택해주세요');
-      return;
-    }
-    if (!subCategory.trim()) {
-      alert('서브 카테고리를 선택해주세요');
-      return;
-    }
-    if (!subCategory.trim()) {
-      alert('서브 카테고리를 선택해주세요');
-      return;
-    }
-    if (!subCategory.trim()) {
-      alert('서브 카테고리를 선택해주세요');
-      return;
+    // 2. 토큰 가져오기 (토큰이 있다고 가정)
+    // 팀의 방식에 따라 localStorage나 변수에서 가져옵니다.
+    // const accessToken = localStorage.getItem('accessToken') || '';
+
+    // 3. 서버 규격(SellerProduct)에 맞게 데이터 객체 생성
+    const productData: SellerProduct = {
+      name: title, // 서버 필드명은 name
+      content: description, // 서버 필드명은 content
+      price: Number(price.replace(/,/g, '')), // 콤마 제거 후 숫자로 변환
+      quantity: 1, // 기본 수량
+      mainImages: [], // 이미지 업로드 전이므로 우선 빈 배열
+      extra: {
+        pet: petType,
+        mainCategory,
+        subCategory,
+        condition: condition === 'new' ? 'new' : 'used',
+        tradeType: tradeType as 'delivery' | 'direct' | 'both',
+        tradeLocation,
+      },
+    };
+
+    // 4. API 호출 (new.ts의 함수 사용)
+    try {
+      // 인자 2개: 데이터와 토큰을 함께 보냅니다.
+      const result = await registProduct(productData);
+      // const result = await registProduct(productData, accessToken);
+
+      if (result.ok) {
+        alert('상품이 성공적으로 등록되었습니다! 🎉');
+        router.push('/products'); // 등록 성공 후 목록 페이지로 이동
+      } else {
+        // 서버에서 보내주는 에러 메시지가 있다면 보여줌
+        alert(result.message || '등록에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('상품 등록 통신 에러:', error);
+      alert('네트워크 오류가 발생했습니다.');
     }
   };
 
+  /* ========== 랜더 ========== */
   return (
-    <div className="min-h-screen flex justify-center">
-      <div className="relative w-full max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-full  px-4 bg-white">
-        {/* 뒤로 가기 섹션 */}
-        {/* TODO 컴포넌트 크기 좀 작은 것 같음 */}
-        {/* <Header title="상품 등록" /> */}
-        <Link href={'/products'}>
-          <button
-            type="button"
-            onClick={() => goBack.back()}
-            aria-label="뒤로 가기"
-            className="absolute left-4 top-14 flex items-center flex-row gap-1.75 cursor-pointer"
-          >
-            <Image src={ArrowIcon} alt="뒤로 가기 아이콘" />
-            <span className="text-[18px] leading-none font-medium">
-              상품 등록
-            </span>
-          </button>
-        </Link>
+    <>
+      <Header title="상품 등록" />
+      <div className="min-h-screen flex justify-center">
+        <div className="relative w-full px-4 bg-white">
+          {/* 사진 등록 - 기본 */}
+          <div className="flex flex-col mt-7.5">
+            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+              사진 등록
+            </p>
+            <div className="mt-1.5 pt-1.5 flex gap-3 overflow-x-auto pb-1.5">
+              <label
+                htmlFor={photos.length < 10 ? 'profileUpload' : undefined} // 10장 미만일 때만 클릭 가능
+                className={`flex flex-col items-center justify-center shrink-0 w-21 h-21 border-2 border-dashed rounded-lg transition-colors ${
+                  photos.length >= 10
+                    ? 'bg-gray-100 border-[#E5E5EA] cursor-not-allowed'
+                    : 'bg-white border-[#D1D1D6] cursor-pointer hover:bg-gray-50'
+                }`}
+                onClick={e => {
+                  if (photos.length >= 10) {
+                    e.preventDefault();
+                    alert('사진은 최대 10장까지만 등록 가능합니다.');
+                  }
+                }}
+              >
+                <span
+                  className={`text-xl ${photos.length >= 10 ? 'text-[#C7C7CC]' : 'text-[#8A8F99]'}`}
+                >
+                  +
+                </span>
+                <span
+                  className={`text-[11px] ${photos.length >= 10 ? 'text-[#C7C7CC]' : 'text-[#8A8F99]'}`}
+                >
+                  {photos.length}/10
+                </span>
+                <input
+                  type="file"
+                  id="profileUpload"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  disabled={photos.length >= 10} // HTML 레벨에서도 비활성화
+                  onChange={handleAddPhoto}
+                />
+              </label>
 
-        {/* ----사진 섹션---- */}
-        <div className="flex flex-col mt-27.5">
-          <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
-            사진 등록
-          </p>
-
-          <div className="mt-1.5 pt-1.5 flex gap-3 overflow-x-auto pb-1.5">
-            {/* + 버튼 */}
-            {/* TODO dash가 안 먹힘... */}
-            <label
-              htmlFor="profileUpload"
-              className="flex flex-col items-center justify-center shrink-0 w-21 h-21 border border-dashed border-[#E5E5EA] rounded-lg bg-white cursor-pointer"
-            >
-              <span className="text-xl text-[#8A8F99]">+</span>
-              <span className="text-[11px] text-[#8A8F99]">
-                {photos.length}/10
-              </span>
-              <input
-                type="file"
-                id="profileUpload"
-                className="hidden"
-                accept="image/*"
-                multiple
-                onChange={handleAddPhoto}
-              />
-            </label>
-
-            {/* 업로드한 사진들 */}
-            {/* TODO 10개 됐을때 더 클릭 안 되게 비활성화 */}
-            {photos.map((photo, index) => (
-              <div key={index} className="relative w-21 h-21 shrink-0">
-                <div className="w-full h-full overflow-hidden rounded-lg bg-[#E5E5EA]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={URL.createObjectURL(photo)}
-                    alt={`사진 ${index + 1}`}
-                    className="w-full h-full object-cover border border-[#e5e5ea] rounded-lg "
-                  />
+              {/* 사진 등록 - 업로드 */}
+              {photos.map((photo, index) => (
+                <div key={index} className="relative w-21 h-21 shrink-0">
+                  <div className="w-full h-full overflow-hidden rounded-lg bg-[#E5E5EA]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={URL.createObjectURL(photo)}
+                      alt={`사진 ${index + 1}`}
+                      className="w-full h-full object-cover border border-[#e5e5ea] rounded-lg "
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePhoto(index)}
+                    className="absolute -top-2 -right-2 z-10 cursor-pointer"
+                  >
+                    <Image
+                      src="/icons/delete-photo.svg"
+                      alt="삭제"
+                      width={18}
+                      height={18}
+                      className="w-6 h-6"
+                    />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeletePhoto(index)}
-                  className="absolute -top-2 -right-2 z-10 cursor-pointer"
-                >
-                  <Image
-                    src="/icons/delete-photo.svg"
-                    alt="삭제"
-                    width={18}
-                    height={18}
-                    className="w-6 h-6"
-                  />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ----폼 섹션---- */}
-        <form className="flex flex-col gap-4 mt-4" onSubmit={handleSubmit}>
-          {/* 반려동물 선택(버튼) */}
-          <div>
-            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
-              반려동물 선택
-            </p>
-            <div className="flex gap-3.75 mt-1.5">
-              <button
-                type="button"
-                onClick={() => setPetType('dog')}
-                className={`flex-1 px-15.75 py-4.25 rounded-lg text-[15px] ${
-                  petType === 'dog'
-                    ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                    : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
-                }`}
-              >
-                강아지
-              </button>
-              <button
-                type="button"
-                onClick={() => setPetType('cat')}
-                className={`flex-1 px-15.75 py-4.25 rounded-lg text-[15px] ${
-                  petType === 'cat'
-                    ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                    : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
-                }`}
-              >
-                고양이
-              </button>
-            </div>
-          </div>
-
-          {/* 메인 카테고리(버튼) */}
-          <div>
-            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
-              카테고리
-            </p>
-            <div className="flex gap-3 mt-1.5">
-              {['사료', '간식', '용품', '건강', '의류'].map(item => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setMainCategory(item)}
-                  className={`flex-1 px-4.5 py-2.25 rounded-lg text-[13px] ${
-                    mainCategory === item
-                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-wihte'
-                  }`}
-                >
-                  {item}
-                </button>
               ))}
             </div>
           </div>
 
-          {/* 서브 카테고리(라디오) */}
-          <div className="grid justify-between grid-cols-3 gap-4">
-            {['건식', '습식/화식', '건조', '기타'].map((label, idx) => (
-              <label
-                key={label}
-                htmlFor={`food-${idx}`}
-                className="flex items-center gap-2.5 ml-4 cursor-pointer"
-              >
+          {/* 폼 전체 */}
+          <form className="flex flex-col gap-4 mt-4" onSubmit={handleSubmit}>
+            {/* 반려동물 선택 */}
+            <div>
+              <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                반려동물 선택
+              </p>
+              <div className="flex gap-3.75 mt-1.5">
+                <button
+                  type="button"
+                  /* onClick={() => setPetType('dog')} */
+                  onClick={() => handlePetChange('dog')}
+                  className={`flex-1 px-15.75 py-4.25 rounded-lg text-[15px] ${
+                    petType === 'dog'
+                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                  }`}
+                >
+                  강아지
+                </button>
+                <button
+                  type="button"
+                  /* onClick={() => setPetType('cat')} */
+                  onClick={() => handlePetChange('cat')}
+                  className={`flex-1 px-15.75 py-4.25 rounded-lg text-[15px] ${
+                    petType === 'cat'
+                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                  }`}
+                >
+                  고양이
+                </button>
+              </div>
+            </div>
+
+            {/* 메인 카테고리 */}
+            <div>
+              <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                카테고리
+              </p>
+              <div className="flex gap-3 mt-1.5">
+                {/* {['사료', '간식', '용품', '건강', '의류'].map(item => ( */}
+                {(Object.keys(CATEGORY_MAP[petType]) as MainCategoryKey[]).map(
+                  item => (
+                    <button
+                      key={item}
+                      type="button"
+                      /* onClick={() => setMainCategory(item)} */
+                      onClick={() => handleMainChange(item)}
+                      className={`flex-1 px-4.5 py-2.25 rounded-lg text-[13px] ${
+                        mainCategory === item
+                          ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                          : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* 하위 카테고리 */}
+            <div className="grid justify-between grid-cols-3 gap-4">
+              {/* {['건식', '습식/화식', '건조', '기타'].map((label, idx) => ( */}
+              {CATEGORY_MAP[petType][mainCategory].map((label, idx) => (
+                <label
+                  key={label}
+                  htmlFor={`food-${idx}`}
+                  className="flex items-center gap-2.5 ml-4 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    id={`food-${idx}`}
+                    name="subCategory" // 같은 그룹임을 명시
+                    value={label}
+                    checked={subCategory === label}
+                    /* onChange={e => setSubCategory(e.target.value)} */
+                    onChange={e => setSubCategory(e.target.value)}
+                    className="peer hidden"
+                  />
+                  <div className="w-5.5 h-5.5 rounded-full border border-[#E5E5EA] flex items-center justify-center transition-colors bg-white peer-checked:border-[#60CFFF] peer-checked:[&>div]:scale-100 peer-checked:[&>div]:opacity-100">
+                    <div className="w-3 h-3 rounded-full bg-[#60CFFF] transition-all duration-200 transform scale-0 opacity-0" />
+                  </div>
+                  <span className="text-[13px] text-[#8A8F99] peer-checked:text-[#0F1218]">
+                    {label}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* 제목 */}
+            <div className="mt-3.5">
+              <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                제목
+              </p>
+              <div className="relative mt-1.5 h-12">
                 <input
-                  type="radio"
-                  id={`food-${idx}`}
-                  name="food"
-                  className="peer hidden"
+                  type="text"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder="제목을 입력하세요"
+                  className="w-full h-full px-4 pr-21.25 border border-[#E5E5EA] rounded-lg text-[15px] text-[#0F1218] placeholder-[#8A8F99] focus:outline-none focus:border-[#60CFFF]"
                 />
-                {/* TODO 안쪽 점 안 생기는 문제 해결 */}
-                {/* 바깥 원 */}
-                <span className="w-5.5 h-5.5 rounded-full border border-[#E5E5EA] flex items-center justify-center transition-colors peer-checked:border-[#60CFFF]">
-                  {/* 안쪽 점 */}
-                  <span className="w-3 h-3 rounded-full bg-[#60CFFF] scale-0 peer-checked:scale-100 transform transition-transform" />
-                </span>
-
-                {/* 텍스트 */}
-                <span className="text-[13px] text-[#8A8F99] peer-checked:text-[#0F1218]">
-                  {label}
-                </span>
-              </label>
-            ))}
-          </div>
-
-          {/* 제목 */}
-          {/* TODO 상품명 말고 제목? */}
-          <div className="mt-3.5">
-            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">제목</p>
-            <div className="relative mt-1.5 h-12">
-              <input
-                type="text"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="제목을 입력하세요"
-                className="w-full h-full px-4 pr-21.25 border border-[#E5E5EA] rounded-lg text-[15px] text-[#0F1218] placeholder-[#8A8F99] focus:outline-none focus:border-[#60CFFF]"
-              />
-            </div>
-          </div>
-
-          {/* 설명 */}
-          <div>
-            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">설명</p>
-            <div className="relative mt-1.5 ">
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder={`포포에 올릴 게시글 내용을 작성해주세요.\n(안전한 거래를 위해 유통기한을 입력해주세요)`}
-                className="w-full h-45 px-4 py-4 leading-5.5 border border-[#E5E5EA] rounded-lg resize-none text-[15px] placeholder:text-[#8A8F99] focus:border-[#60CFFF] focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* 가격 */}
-          <div>
-            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">가격</p>
-            <div className="relative mt-1.5 h-12">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={displayValue}
-                onChange={handleChange}
-                placeholder="₩ 가격을 입력해주세요"
-                onInput={e => {
-                  const target = e.currentTarget;
-                  target.value = target.value
-                    .replace(/[^0-9.]/g, '')
-                    .replace(/(\..*)\./g, '$1');
-                }}
-                className="w-full h-full px-4 border border-[#E5E5EA] rounded-lg text-[15px] text-[#0F1218] placeholder-[#8A8F99] focus:outline-none focus:border-[#60CFFF]"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[#0F1218]">
-                원
-              </span>
-            </div>
-          </div>
-
-          {/* 상품 상태 */}
-          <div>
-            <div>
-              <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
-                상품 상태
-              </p>
-              <div className="flex gap-3.75 mt-1.5">
-                <button
-                  type="button"
-                  onClick={() => setProductStatus('dog')}
-                  className={`flex-1 h-13 rounded-lg text-[15px] ${
-                    productStatus === 'dog'
-                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
-                  }`}
-                >
-                  중고
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setProductStatus('cat')}
-                  className={`flex-1 h-13 rounded-lg text-[15px] ${
-                    productStatus === 'cat'
-                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
-                  }`}
-                >
-                  새상품
-                </button>
               </div>
             </div>
-          </div>
 
-          {/* 거래 방식 */}
-          <div>
+            {/* 설명 */}
             <div>
               <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
-                거래 방식
+                설명
               </p>
-              <div className="flex gap-3.75 mt-1.5">
-                <button
-                  type="button"
-                  onClick={() => setTradeMethod('dog')}
-                  className={`flex-1 h-13 rounded-lg text-[15px] ${
-                    tradeMethod === 'dog'
-                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
-                  }`}
-                >
-                  직거래
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTradeMethod('cat')}
-                  className={`flex-1 h-13 rounded-lg text-[15px] ${
-                    tradeMethod === 'cat'
-                      ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
-                      : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
-                  }`}
-                >
-                  택배거래
-                </button>
+              <div className="relative mt-1.5 ">
+                <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder={`포포에 올릴 게시글 내용을 작성해주세요.\n(안전한 거래를 위해 유통기한을 입력해주세요)`}
+                  className="w-full h-45 px-4 py-4 leading-5.5 border border-[#E5E5EA] rounded-lg resize-none text-[15px] placeholder:text-[#8A8F99] focus:border-[#60CFFF] focus:outline-none"
+                />
               </div>
             </div>
-          </div>
 
-          {/* 장소 입력 */}
-          <div>
-            <p className="ml-1 text-[13px] font-medium text-[#0F1218]">장소</p>
-            <div className="relative mt-1.5 h-12">
-              <input
-                type="text"
-                /*  value={petWeight}
-                onChange={e => setPetWeight(e.target.value)} */
-                placeholder="종로 1번 출구"
-                className="w-full h-full px-4 border border-[#E5E5EA] rounded-lg text-[15px] text-[#0F1218] placeholder-[#8A8F99] focus:outline-none focus:border-[#60CFFF]"
-              />
+            {/* 가격 */}
+            <div>
+              <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                가격
+              </p>
+              <div className="relative mt-1.5 h-12">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={handlePriceChange}
+                  placeholder="₩ 가격을 입력해주세요"
+                  onInput={e => {
+                    const target = e.currentTarget;
+                    target.value = target.value
+                      .replace(/[^0-9.]/g, '') // 숫자와 소수점 이외의 문자 제거
+                      .replace(/(\..*)\./g, '$1'); // 소수점 2개 이상 입력 방지
+                  }}
+                  className="w-full h-full px-4 border border-[#E5E5EA] rounded-lg text-[15px] text-[#0F1218] placeholder-[#8A8F99] focus:outline-none focus:border-[#60CFFF]"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[#0F1218]">
+                  원
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* ----변경 버튼---- */}
-          <div className="mb-5 pb-safe">
-            <Link href="/products">
+            {/* 상품 상태 */}
+            <div>
+              <div>
+                <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                  상품 상태
+                </p>
+                <div className="flex gap-3.75 mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCondition('used')}
+                    className={`flex-1 h-13 rounded-lg text-[15px] ${
+                      condition === 'used'
+                        ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                        : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                    }`}
+                  >
+                    중고
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCondition('new')}
+                    className={`flex-1 h-13 rounded-lg text-[15px] ${
+                      condition === 'new'
+                        ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                        : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                    }`}
+                  >
+                    새상품
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 거래 방식 */}
+            <div>
+              <div>
+                <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                  거래 방식
+                </p>
+                <div className="flex gap-3.75 mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTradeType('direct')}
+                    className={`flex-1 h-13 rounded-lg text-[15px] ${
+                      tradeType === 'direct'
+                        ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                        : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                    }`}
+                  >
+                    직거래
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTradeType('delivery')}
+                    className={`flex-1 h-13 rounded-lg text-[15px] ${
+                      tradeType === 'delivery'
+                        ? 'text-[#60CFFF] font-semibold border border-[#60cfff] bg-[#E8F8FF]'
+                        : 'text-[#8A8F99] border border-[#E5E5EA] bg-white'
+                    }`}
+                  >
+                    택배거래
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 장소 입력 */}
+            <div>
+              <p className="ml-1 text-[13px] font-medium text-[#0F1218]">
+                장소
+              </p>
+              <div className="relative mt-1.5 h-12">
+                <input
+                  type="text"
+                  value={tradeLocation}
+                  onChange={e => setTradeLocation(e.target.value)}
+                  placeholder="종로 1번 출구"
+                  className="w-full h-full px-4 border border-[#E5E5EA] rounded-lg text-[15px] text-[#0F1218] placeholder-[#8A8F99] focus:outline-none focus:border-[#60CFFF]"
+                />
+              </div>
+            </div>
+
+            {/* 상품 등록(button) */}
+            <div className="mb-5 pb-safe">
               <button
                 type="submit"
-                className="relative flex items-center justify-center mt-10  w-full h-14 rounded-lg bg-[#60CFFF] text-white font-medium cursor-pointer"
+                className="flex items-center justify-center mt-10 w-full h-14 rounded-lg bg-[#60CFFF] text-white font-medium"
               >
                 상품 등록
               </button>
-            </Link>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
