@@ -136,11 +136,18 @@ export default function MyPage() {
               <p className="text-center font-light text-br-input-disabled-text pb-2 text-sm">
                 AI 맞춤 상품 추천을 위해 정보를 입력해주세요
               </p>
+              <Link
+                href="/mypage/petedit"
+                type="submit"
+                className="flex items-center justify-center mt-4 w-full h-14 rounded-lg bg-br-primary-500 text-white text-lg"
+              >
+                나의 포포 등록
+              </Link>
             </div>
           )}
         </section>
         {/* 나의 관심 */}
-        <section className="px-4 py-4 mt-2">
+        <section className="px-4 py-4">
           <h3 className="text-lg font-semibold mb-4">나의 관심</h3>
 
           <div className="flex py-4">
@@ -182,7 +189,7 @@ export default function MyPage() {
         </section>
 
         {/* 나의 거래 */}
-        <section className="px-4 py-4 mt-2">
+        <section className="px-4 py-4">
           <h3 className="text-lg font-semibold mb-4">나의 거래</h3>
 
           <ul className="space-y-1 ml-7">

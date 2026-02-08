@@ -6,6 +6,7 @@ import { getBookmarks } from '@/lib/api/bookmarks';
 import { useEffect, useState } from 'react';
 import { ProductTargetBookmark } from '@/types/product';
 import SavedProductCard from '@/components/mypage/SavedProductCard';
+import Spinner from '@/components/common/Spinner';
 
 // 찜 목록
 export default function WishlistPage() {
@@ -26,8 +27,9 @@ export default function WishlistPage() {
   }, []);
 
   if (isLoading) {
-    return <div>로딩중...</div>;
+    return <Spinner />;
   }
+
   return (
     <>
       <div className="font-pretendard">
@@ -35,7 +37,7 @@ export default function WishlistPage() {
         <Header title="찜 목록" />
 
         {/* 상품 목록 */}
-        <div>
+        <div className="mb-20">
           {bookmarks.length > 0 ? (
             bookmarks.map(bookmark => (
               <SavedProductCard
