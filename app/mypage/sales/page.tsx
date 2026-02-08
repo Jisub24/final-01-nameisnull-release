@@ -2,9 +2,9 @@
 
 import UnderBar from '@/components/common/Footer';
 import Header from '@/components/common/Header';
-import ProductList from '@/components/search/ProductList';
-import { getSellerProductList } from '@/lib/api/products';
-import { getUserInfo } from '@/lib/api/users';
+import Spinner from '@/components/common/Spinner';
+import SearchResultProduct from '@/components/search/SearchResultProduct';
+import { mypageSellerProductList } from '@/lib/api/products';
 import { SellerProductList } from '@/types/product';
 import { useEffect, useState } from 'react';
 
@@ -18,17 +18,10 @@ export default function SalesPage() {
     const fetchSellerProducts = async () => {
       setIsLoading(true);
 
-      // 현재 로그인한 유저 정보 가져오기
-      const { ok: userOk, item: user } = await getUserInfo();
+      const response = await mypageSellerProductList();
 
-      if (userOk === 1 && user) {
-        // 판매자 상품 목록 가져오기
-        const response = await getSellerProductList(user._id);
-
-        // ok === 1일 때만 item이 존재
-        if (response.ok === 1) {
-          setProducts(response.item);
-        }
+      if (response.ok === 1) {
+        setProducts(response.item);
       }
 
       setIsLoading(false);
@@ -36,14 +29,9 @@ export default function SalesPage() {
 
     fetchSellerProducts();
   }, []);
-  // 판매 중 / 판매 완료 필터링 --- 작업중 ----
-  // extra?.isSoldOut 또는 quantity로 구분하기????  타입수정필요할듯?
-  // const sellingProducts = products.filter(
-  //   p => !p._id.isSoldOut && p.quantity > 1
-  // );
-  // const soldProducts = products.filter(
-  //   p => p.extra?.isSoldOut || p.quantity === 1
-  // );
+  // 판매 중 / 판매 완료 필터링
+  const sellingProducts = products.filter(p => p.buyQuantity === 0);
+  const soldProducts = products.filter(p => p.buyQuantity === 1);
 
   return (
     <>
@@ -77,19 +65,39 @@ export default function SalesPage() {
       </div>
       <div>
         {/* 상품 목록 */}
-        <main className="flex-1 px-4">
+        <main className="font-pretendard flex-1 px-4 mb-20">
           {/* 판매 중 탭 */}
           {activeTab === 'selling' && (
             <>
-              <ProductList />
+              {isLoading ? (
+                <Spinner />
+              ) : sellingProducts.length > 0 ? (
+                sellingProducts.map(product => (
+                  <SearchResultProduct key={product._id} product={product} />
+                ))
+              ) : (
+                <div className="text-center mt-20 text-gray-500 font-light">
+                  판매 중인 상품이 없습니다
+                </div>
+              )}
             </>
           )}
 
           {/* 판매 완료 탭 */}
           {activeTab === 'sold' && (
-            <>
-              <ProductList />
-            </>
+            <div>
+              {isLoading ? (
+                <Spinner />
+              ) : soldProducts.length > 0 ? (
+                soldProducts.map(product => (
+                  <SearchResultProduct key={product._id} product={product} />
+                ))
+              ) : (
+                <div className="text-center mt-20 text-gray-500 font-light">
+                  판매 완료된 상품이 없습니다
+                </div>
+              )}
+            </div>
           )}
         </main>
         <UnderBar />

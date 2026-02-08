@@ -105,8 +105,11 @@ export interface OrderCorrection {
 // 판매자의 다른 상품 리스트, 판매 내역 페이지
 export type SellerProductList = Pick<
   Product,
-  '_id' | 'seller_id' | 'name' | 'mainImages' | 'price' | 'bookmarks'
->;
+  '_id' | 'seller_id' | 'name' | 'mainImages' | 'price' | 'bookmarks' | 'views'
+> & {
+  quantity: number;
+  buyQuantity: number;
+};
 
 //판매자 후기
 export interface UserReview {
