@@ -12,6 +12,7 @@ export interface Product {
   price: number;
   name: string;
   mainImages: ProductImages[];
+  image?: string;
   quantity?: number;
   buyQuantity?: number;
   show?: boolean;
@@ -133,8 +134,11 @@ export interface OrderItem {
 // 판매자의 다른 상품 리스트, 판매 내역 페이지
 export type SellerProductList = Pick<
   Product,
-  '_id' | 'seller_id' | 'name' | 'mainImages' | 'price' | 'bookmarks'
->;
+  '_id' | 'seller_id' | 'name' | 'mainImages' | 'price' | 'bookmarks' | 'views'
+> & {
+  quantity: number;
+  buyQuantity: number;
+};
 
 //판매자 후기
 export interface UserReview {
@@ -196,5 +200,11 @@ export type BookmarkDeleteRes =
 export interface PurchaseList {
   _id: number;
   user_id: number;
+  state: string;
   products: Product[];
+  cost?: {
+    products: number;
+    shippingFees: number;
+    total: number;
+  };
 }

@@ -3,13 +3,14 @@ const RECENT_PRODUCTS_KEY = 'recentProducts';
 // 최근 본 상품에 필요한 정보만 저장
 export interface RecentProductItem {
   _id: number;
+  seller_id: number;
   name: string;
   price: number;
+  bookmarks: number;
   mainImages?: Array<{ path: string }>;
   seller: {
     name: string;
   };
-  bookmarks?: number;
 }
 
 // 최근 본 상품 추가

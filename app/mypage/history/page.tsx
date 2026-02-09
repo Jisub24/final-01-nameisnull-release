@@ -2,32 +2,33 @@
 
 import UnderBar from '@/components/common/Footer';
 import Header from '@/components/common/Header';
+import Spinner from '@/components/common/Spinner';
 import SavedProductCard from '@/components/mypage/SavedProductCard';
 import { getBookmarks } from '@/lib/api/bookmarks';
 import { getRecentProducts, RecentProductItem } from '@/lib/utils/storage';
 import { useEffect, useState } from 'react';
 
 export default function HistoryPage() {
-  const [products, setProducts] = useState<RecentProductItem[]>([]);
+  const [products, setProducts] = useState(getRecentProducts);
   const [wishedProductIds, setWishedProductIds] = useState<number[]>([]);
-
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      // 최근 본 상품 가져오기
+      // localStorage 가져오기
       const recentProducts = getRecentProducts();
-      setProducts(recentProducts);
 
-      // 찜 목록 가져오기
+      // API 가져오기
       const bookmarkData = await getBookmarks();
+
+      let wishedIds: number[] = [];
       if (bookmarkData.ok === 1) {
-        const wishedIds = bookmarkData.item.map(
-          bookmark => bookmark.product._id
-        );
-        setWishedProductIds(wishedIds);
+        wishedIds = bookmarkData.item.map(bookmark => bookmark.product._id);
       }
 
+      // 둘 다 준비되면 한 번에 set(자꾸 숫자 이상해지는 오류 해결됨)
+      setProducts(recentProducts);
+      setWishedProductIds(wishedIds);
       setIsLoading(false);
     };
 
@@ -35,19 +36,20 @@ export default function HistoryPage() {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>로딩중...</p>
-      </div>
-    );
+    return <Spinner />;
   }
+
   return (
     <>
       <Header title="최근 본 상품" />
 
       {/* 최근 본 상품 목록 */}
-      <div className="font-pretendard">
-        {products.length > 0 ? (
+      <div className="pb-20">
+        {products.length === 0 ? (
+          <div className="p-4 text-center text-br-text-body">
+            최근 본 상품이 없습니다.
+          </div>
+        ) : (
           products.map(product => (
             <SavedProductCard
               key={product._id}
@@ -55,10 +57,6 @@ export default function HistoryPage() {
               isWished={wishedProductIds.includes(product._id)}
             />
           ))
-        ) : (
-          <p className="text-center mt-20 text-gray-500">
-            최근 본 상품이 없습니다
-          </p>
         )}
       </div>
 

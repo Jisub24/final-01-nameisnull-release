@@ -3,6 +3,7 @@
 import UnderBar from '@/components/common/Footer';
 import Header from '@/components/common/Header';
 import { getUserInfo } from '@/lib/api/users';
+import useUserStore from '@/store/authStore';
 import { User } from '@/types/user';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,6 +14,12 @@ export default function MyPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 로그아웃
+  const handleLogout = () => {
+    useUserStore.getState().resetUser();
+    router.push('/'); // 홈으로 이동
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -136,11 +143,18 @@ export default function MyPage() {
               <p className="text-center font-light text-br-input-disabled-text pb-2 text-sm">
                 AI 맞춤 상품 추천을 위해 정보를 입력해주세요
               </p>
+              <Link
+                href="/mypage/petedit"
+                type="submit"
+                className="flex items-center justify-center mt-4 w-full h-14 rounded-lg bg-br-primary-500 text-white text-lg"
+              >
+                나의 포포 등록
+              </Link>
             </div>
           )}
         </section>
         {/* 나의 관심 */}
-        <section className="px-4 py-4 mt-2">
+        <section className="px-4 py-4">
           <h3 className="text-lg font-semibold mb-4">나의 관심</h3>
 
           <div className="flex py-4">
@@ -182,7 +196,7 @@ export default function MyPage() {
         </section>
 
         {/* 나의 거래 */}
-        <section className="px-4 py-4 mt-2">
+        <section className="px-4 py-4">
           <h3 className="text-lg font-semibold mb-4">나의 거래</h3>
 
           <ul className="space-y-1 ml-7">
@@ -289,7 +303,10 @@ export default function MyPage() {
               </button>
             </li>
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button
+                className="w-full flex items-center justify-between py-2"
+                onClick={handleLogout}
+              >
                 <span className="text-br-input-disabled-text">로그아웃</span>
                 <Image
                   src="/icons/arrow-right.svg"

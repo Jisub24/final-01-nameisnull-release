@@ -1,9 +1,18 @@
+import useUserStore from '@/store/authStore';
 import { ApiListResponse, ApiResponse } from '@/types/common';
 import { OrderItem, PurchaseList } from '@/types/product';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID || '';
 
+// 구매 내역 조회
+export async function mypageOrderProductList(): Promise<
+  ApiListResponse<PurchaseList>
+> {
+  try {
+    const { accessToken, user } = useUserStore.getState();
+
+    const res = await fetch(`${API_URL}/orders`, {
 // 판매 확정 (판매자가 구매 처리)
 export async function confirmSale(
   {

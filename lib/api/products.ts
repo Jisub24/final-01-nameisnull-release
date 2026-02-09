@@ -1,3 +1,4 @@
+import useUserStore from '@/store/authStore';
 import { ApiListResponse, ApiResponse } from '@/types/common';
 import { Product, ProductDetail, SellerProductList } from '@/types/product';
 
@@ -53,7 +54,6 @@ export async function getProductDetail(
 }
 
 //상품 상세 페이지 - 판매자 상품 목록
-//마이페이지 - 판매 내역
 export async function getSellerProductList(
   sellerId: number
 ): Promise<ApiListResponse<SellerProductList>> {
@@ -62,6 +62,32 @@ export async function getSellerProductList(
       headers: {
         'Client-Id': CLIENT_ID,
       },
+    });
+
+    return res.json();
+  } catch (error) {
+    console.error(error);
+    return {
+      ok: 0,
+      message:
+        '요청하신 작업 처리에 실패했습니다. 잠시 후 다시 이용해 주시기 바랍니다.',
+    };
+  }
+}
+
+//마이페이지 - 판매 내역
+export async function mypageSellerProductList(): Promise<
+  ApiListResponse<SellerProductList>
+> {
+  try {
+    const { accessToken, user } = useUserStore.getState();
+
+    const res = await fetch(`${API_URL}/seller/products`, {
+      headers: {
+        'Client-Id': CLIENT_ID,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
     });
 
     return res.json();
