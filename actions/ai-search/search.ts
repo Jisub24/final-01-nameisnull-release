@@ -2,34 +2,110 @@
 
 import { getProducts } from '@/lib/api/products';
 import cosineSimilarity from '@/lib/utils/similarity';
-import {
-  EmbeddingProducts,
-  ProductList,
-  ProductSearchList,
-} from '@/types/product';
+import { EmbeddingProducts, ProductList } from '@/types/product';
 import OpenAI from 'openai';
+
+// ----------- 타입 정의 -----------
+
+/**
+ * 반려동물 종류
+ */
+type PetType = 'dog' | 'cat';
+
+/**
+ * 카테고리 필터 타입
+ * 검색어에서 추출된 카테고리 정보를 담는 객체
+ */
+type Categories = {
+  pet?: PetType; // 동물 종류 (강아지/고양이)
+  mainCategory?: string; // 메인 카테고리 (사료/간식/용품/건강/의류)
+  subCategory?: string; // 서브 카테고리 (건식/습식/껌 등)
+};
+
+/**
+ * 유사도 계산 결과
+ * 각 상품의 ID와 계산된 유사도 점수를 저장
+ */
+interface SimilarityResult {
+  _id: number; // 상품 ID
+  similarity: number; // 최종 유사도 점수
+}
+
+/**
+ * 상품의 extra 필드 타입
+ * 상품 객체의 extra 속성 구조를 명확히 정의
+ */
+interface ProductExtra {
+  pet: PetType; // 동물 종류
+  mainCategory: string; // 메인 카테고리
+  subCategory?: string; // 서브 카테고리
+  embeddings?: number[]; // 임베딩 벡터
+}
+
+/**
+ * 카테고리 매칭에 사용되는 상품 객체 타입
+ */
+interface ProductForBonus {
+  extra: ProductExtra;
+}
+
+/**
+ * 키워드 매칭에 사용되는 상품 객체 타입
+ */
+interface ProductForKeyword {
+  name: string;
+}
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY가 설정되지 않았습니다.');
+  }
+
+  // 이미 open api key가 있으면 재사용
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey: OPENAI_API_KEY });
+  }
+
+  return openaiClient;
+}
 
 // 텍스트를 임베딩하는 함수
 async function getEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: text,
-  });
+  try {
+    const client = getOpenAIClient();
+    const response = await client.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: text,
+    });
 
-  return response.data[0].embedding;
+    return response.data[0].embedding;
+  } catch (error) {
+    console.error('임베딩 생성 실패:', error);
+    if (error instanceof Error) {
+      // API 키 문제
+      if (error.message.includes('API key')) {
+        throw new Error('OpenAI API 키가 유효하지 않습니다.');
+      }
+
+      // Rate limit 문제
+      if (error.message.includes('rate limit')) {
+        throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+      }
+
+      // 네트워크 문제
+      if (error.message.includes('network')) {
+        throw new Error('네트워크 연결에 문제가 있습니다.');
+      }
+
+      throw new Error(`임베딩 생성 중 오류: ${error.message}`);
+    }
+    throw new Error('임베딩 생성 중 알 수 없는 오류가 발생했습니다.');
+  }
 }
-
-type Categories = {
-  pet?: 'dog' | 'cat';
-  mainCategory?: string;
-  subCategory?: string;
-};
 
 // 키워드 기반 카테고리 추출 작업
 function extractCategories(searchQuery: string): Categories {
@@ -138,54 +214,47 @@ function extractCategories(searchQuery: string): Categories {
 }
 
 // 카테고리 매칭에 따른 가중치 부여해주는 작업
-function giveBonus(
-  product: {
-    extra: { pet: 'dog' | 'cat'; mainCategory: string; subCategory?: string };
-  },
-  filter: {
-    pet?: 'dog' | 'cat';
-    mainCategory?: string;
-    subCategory?: string;
-  }
-): number {
+function giveBonus(product: ProductForBonus, filter: Categories): number {
   // 기본 가중치
   let bonus = 1.0;
 
-  // 동물 종류가 명시되어 있는데 다르면 큰 페널티
+  // 동물 종류가 명시되어 있는데 다르면 패널티
   if (filter.pet && product.extra.pet !== filter.pet) {
     bonus *= 0.3; // 70% 감점
-    return bonus; // 다른 보너스 주지 않고 바로 반환
+    return bonus;
   }
 
+  // 메인 카테고리가 다르면 패널티
   if (
     filter.mainCategory &&
     product.extra.mainCategory !== filter.mainCategory
   ) {
-    bonus *= 0.3; // 70% 감점
-    return bonus; // 다른 보너스 주지 않고 바로 반환
+    bonus *= 0.3;
+    return bonus;
   }
 
+  // 서브 카테고리가 다르면 패널티
   if (filter.subCategory && product.extra.subCategory !== filter.subCategory) {
-    bonus *= 0.3; // 70% 감점
-    return bonus; // 다른 보너스 주지 않고 바로 반환
+    bonus *= 0.3;
+    return bonus;
   }
 
-  // 동물 종류 매칭 시 가중치
+  // 동물 종류 매칭 시 가중치 부여
   if (filter.pet && filter.pet === product.extra.pet) {
     bonus += 0.4;
   }
 
-  // 메인 카테고리 매칭 시 가중치
+  // 메인 카테고리 매칭 시 가중치 부여
   if (
     filter.mainCategory &&
     product.extra.mainCategory === filter.mainCategory
   ) {
-    bonus += 0.4; // 15% 추가
+    bonus += 0.4;
   }
 
-  // 서브 카테고리 매칭 시 가중치
+  // 서브 카테고리 매칭 시 가중치 부여
   if (filter.subCategory && product.extra.subCategory === filter.subCategory) {
-    bonus += 0.5; // 10% 추가
+    bonus += 0.5;
   }
 
   return bonus;
@@ -321,9 +390,7 @@ function extractKeywords(searchQuery: string): string[] {
 
 // 상품에 키워드가 포함되어 있으면 가중치를 주는 함수
 function calculateKeywordBonus(
-  product: {
-    name: string;
-  },
+  product: ProductForKeyword,
   keywords: string[]
 ): number {
   if (keywords.length === 0) return 0;
@@ -345,7 +412,7 @@ function calculateKeywordBonus(
 // 검색어 임베딩 데이터와 상품 설명 임베딩 데이터 비교하는 작업
 export async function SimilarityCompare(
   formData: FormData
-): Promise<ProductSearchList[]> {
+): Promise<ProductList[]> {
   try {
     // 1. 폼 데이터인 검색어 추출
     const searchQuery = formData.get('query') as string;
@@ -357,7 +424,7 @@ export async function SimilarityCompare(
     // 1-1. 검색어에서 카테고리 추출
     const categoryFilter = extractCategories(searchQuery);
 
-    // 검색어에서 카테고리를 제외한 키워드 추출
+    // 1-2. 검색어에서 카테고리를 제외한 키워드 추출
     const keywords = extractKeywords(searchQuery);
 
     console.log(`검색어: ${searchQuery}`);
@@ -379,7 +446,7 @@ export async function SimilarityCompare(
     // 4. 각 상품의 임베딩과 유사도 계산
 
     // 4-1. 코사인 유사도 값을 저장하는 배열 생성
-    const similarityArr = [];
+    const similarityArr: SimilarityResult[] = [];
 
     for (let i = 0; i < products.length; i++) {
       // 임베딩이 없는 상품은 스킵
@@ -396,7 +463,7 @@ export async function SimilarityCompare(
       // 4-3. 카테고리 매칭에 따른 가중치 계산
       const categoryBonus = giveBonus(products[i], categoryFilter);
 
-      // 카테고리를 제외한 키워드 매칭 보너스
+      // 4-4. 카테고리를 제외한 키워드 매칭 보너스
       const keywordBonus = calculateKeywordBonus(
         {
           name: products[i].name,
@@ -405,11 +472,11 @@ export async function SimilarityCompare(
       );
 
       const totalSimilarity = similarity * categoryBonus + keywordBonus;
-      // 4-4. 상품 _id와 유사도를 같이 저장
+      // 4-5. 상품 _id와 유사도를 같이 저장
       similarityArr.push({ _id: products[i]._id, similarity: totalSimilarity });
     }
 
-    // 검색어 길이에 따라 임계값 조정
+    // 4-6. 검색어 길이에 따라 임계값 조정
     const queryLength = searchQuery.replace(/\s/g, '').length; // 공백 제거한 길이
     let threshold = 0.5; // 기본값
 
@@ -421,25 +488,14 @@ export async function SimilarityCompare(
       threshold = 0.4; // 긴 검색어 (예: "가루날림 적은 캣닢 티백")
     }
 
-    // 4-5. 유사도가 0.5 이상인 상품들을 유사도가 높은 순으로 추출
+    // 4-7. 유사도가 0.5 이상인 상품들을 유사도가 높은 순으로 추출
     const highSimilarity = similarityArr
       .filter(item => item.similarity >= threshold)
       .sort((a, b) => b.similarity - a.similarity);
 
-    // 유사도 확인하는 코드
-    // console.log('categoryFilter:', categoryFilter);
-    // console.log('highSimilarity 개수:', highSimilarity.length);
-    // console.log('highSimilarity:', highSimilarity);
-
-    // // 필터링 전 유사도도 보기
-    // console.log(
-    //   'similarityArr 상위 5개:',
-    //   similarityArr.sort((a, b) => b.similarity - a.similarity).slice(0, 5)
-    // );
-
-    // 5개가 저장된 highSimilarity의 _id와 상품 목록에 있는 상품들의 _id 비교
+    // 5.유사도 높은 순으로 저장된 highSimilarity의 _id와 상품 목록에 있는 상품들의 _id 비교
     const productsList: ProductList[] = listRes.item;
-    const searchResult: ProductSearchList[] = highSimilarity.map(item => {
+    const searchResult: ProductList[] = highSimilarity.map(item => {
       return productsList.find(p => p._id === item._id)!;
     });
     return searchResult;

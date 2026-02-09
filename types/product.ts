@@ -36,16 +36,10 @@ export interface Product {
 // 임베딩 된 상품 목록 조회
 export type EmbeddingProducts = Array<Pick<Product, '_id' | 'extra' | 'name'>>;
 
-// 검색 결과용 Product
-export type ProductSearchList = Pick<
-  Product,
-  '_id' | 'name' | 'price' | 'mainImages' | 'bookmarks' | 'views'
->;
-
 // 검색 결과 응답 타입 -> 얘만 따로
 export interface ProductSearchListRes {
   ok: 1;
-  item: ProductSearchList[];
+  item: ProductList[];
   pagination: {
     page: number;
     limit: number;
