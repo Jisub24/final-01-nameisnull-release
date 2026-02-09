@@ -7,12 +7,12 @@ import SearchResultHeader from '@/components/search/SearchResultHeader';
 import SearchResultProductList from '@/components/search/SearchResultProductList';
 import { getProductDetail } from '@/lib/api/products';
 import { useSearchStore } from '@/store/searchStore';
-import { ProductSearchList } from '@/types/product';
+import { ProductList } from '@/types/product';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function SearchResultPage() {
-  const [proudcts, setProducts] = useState<ProductSearchList[]>([]);
+  const [proudcts, setProducts] = useState<ProductList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // url의 id 정보가 담긴 쿼리 파리미터 가져오기
